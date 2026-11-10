@@ -103,6 +103,23 @@
   .item-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px}
   .item-foot b{font-variant-numeric:tabular-nums}
   .item-foot .tot{color:var(--accent);font-weight:800}
+  .item-foot .custo{flex-basis:100%;color:var(--muted);font-size:13px;border-top:1px dashed var(--line);padding-top:7px;margin-top:2px}
+  .item-foot .custo b{color:var(--ink);font-weight:700}
+  nav{overflow-x:auto;scrollbar-width:none}
+  .hist-top{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .hist-top input{flex:1;min-width:180px}
+  .hcard{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;background:#fff}
+  .hcard.aberto{border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,106,26,.15)}
+  .hrow{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+  .hnum{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .hcli{font-size:16px;font-weight:800;margin:2px 0}
+  .hmeta{font-size:13px;color:var(--muted)}
+  .htot{font-size:18px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right}
+  .htot small{display:block;font-size:12px;color:var(--ok);font-weight:700}
+  .hitens{font-size:13px;color:var(--ink);margin:8px 0 10px;line-height:1.5}
+  .hacts{display:flex;gap:8px;flex-wrap:wrap}
+  .btn.danger{color:#b3392f;border-color:#efc9c4}
+  .vazio{text-align:center;color:var(--muted);padding:30px 10px;font-size:14px}
   .res .lbl{display:flex;flex-direction:column}
   .res .lbl small{color:var(--muted);font-size:12px}
 </style>
@@ -117,6 +134,7 @@
   <nav>
     <button class="on" data-tab="orc">Orçamento</button>
     <button data-tab="cfg">Custos e configurações</button>
+    <button data-tab="hist">Histórico <span id="histCount"></span></button>
   </nav>
 </header>
 
@@ -186,6 +204,17 @@
 </section>
 
 <!-- ===================== CONFIGURAÇÕES ===================== -->
+<section id="tab-hist" class="hide">
+  <div class="card">
+    <h2>Histórico de orçamentos</h2>
+    <div class="hist-top">
+      <input id="histBusca" placeholder="Buscar por cliente, nº ou item">
+    </div>
+    <div id="histLista"></div>
+    <p class="note">Ao clicar em "Novo orçamento", o orçamento atual é guardado aqui. Use "Abrir" para voltar a editar ou gerar o PDF de novo. O histórico fica salvo neste aparelho.</p>
+  </div>
+</section>
+
 <section id="tab-cfg" class="hide">
   <div class="card">
     <h2>Filamentos</h2>
@@ -398,7 +427,7 @@ function renderItens(){
       <div class="f"><label>Quantidade</label><div class="unit"><input data-it="${i}" data-k="qtd" value="${esc(it.qtd)}" type="number" inputmode="numeric" min="1" step="1"><span>un</span></div></div>
     </div>
     <div class="f"><label>Equipamento</label><select data-it="${i}" data-k="equipamento">${opE(it.equipamento)}</select></div>
-    <div class="item-foot"><span>Unitário: <b id="iu${i}">–</b></span><span>Total do item: <b class="tot" id="it${i}">–</b></span></div>
+    <div class="item-foot"><span>Unitário: <b id="iu${i}">–</b></span><span>Total do item: <b class="tot" id="it${i}">–</b></span><span class="custo" id="ic${i}">–</span></div>
   </div>`).join('');
 }
 function onItem(ev){
@@ -480,7 +509,8 @@ function carregarRascunho(){
 
 function atualizar(){
   const r = calcular();
-  r.linhas.forEach((l,i)=>{ const u=$('iu'+i), t=$('it'+i); if(u) u.textContent = brl(l.unit); if(t) t.textContent = brl(l.total); });
+  r.linhas.forEach((l,i)=>{ const u=$('iu'+i), t=$('it'+i), c=$('ic'+i); if(u) u.textContent = brl(l.unit); if(t) t.textContent = brl(l.total);
+    if(c) c.innerHTML = `Custo bruto: <b>${brl(l.custo)}</b>/un · <b>${brl(l.custoTot)}</b> no total · lucro <b>${brl(l.total - l.custoTot)}</b>`; });
   $('rItens').innerHTML = r.linhas.map((l,i)=>`<div class="res"><span class="lbl">${esc(itens[i].desc || 'Item '+(i+1))}<small>${fmtN(l.q,0)} un × ${brl(l.unit)}</small></span><b>${brl(l.total)}</b></div>`).join('');
   $('rTotal').textContent = brl(r.total);
   $('rPecas').textContent = `${fmtN(r.pecas,0)} peças · ${itens.length} ${itens.length>1?'itens':'item'}`;
@@ -489,7 +519,83 @@ function atualizar(){
   $('rLucro').textContent = brl(r.lucro);
 }
 CAMPOS.forEach(c=>{ $(c).addEventListener('input', ()=>{ atualizar(); salvarRascunho(); }); $(c).addEventListener('change', ()=>{ atualizar(); salvarRascunho(); }); });
-$('btnNovo').onclick = ()=>{ novoOrcamento(); window.scrollTo({top:0,behavior:'smooth'}); toast('Novo orçamento Nº '+cfg.proxNumero); };
+/* ---------- histórico ---------- */
+let hist = store.get('orc3d_hist', []);
+let origemId = store.get('orc3d_origem', null);   // id do histórico de onde o orçamento atual foi aberto
+function salvarHist(){
+  try{ localStorage.setItem('orc3d_hist', JSON.stringify(hist)); return true; }
+  catch(e){ toast('Memória cheia: exclua orçamentos antigos do histórico'); return false; }
+}
+function atualHasConteudo(){
+  return ($('cliente').value.trim() || itens.some(it => it.desc.trim() || num(it.gramas) > 0 || num(it.hh) > 0 || num(it.mm) > 0));
+}
+function guardarAtualNoHistorico(){
+  if(!atualHasConteudo()) return false;
+  const r = calcular(); const campos = {}; CAMPOS.forEach(c=>campos[c]=$(c).value);
+  const reg = {id: origemId || ('h'+Date.now()), salvoEm: new Date().toISOString(), campos, itens: JSON.parse(JSON.stringify(itens)),
+               total: r.total, custoTot: r.custoTot, pecas: r.pecas};
+  const ix = hist.findIndex(h=>h.id===reg.id);
+  if(ix >= 0) hist.splice(ix, 1);
+  hist.unshift(reg);
+  return salvarHist();
+}
+function contarHist(){ $('histCount').textContent = hist.length ? `(${hist.length})` : ''; }
+function fmtData(iso){ if(!iso) return ''; const [a,m,d] = iso.split('-'); return d ? `${d}/${m}/${a}` : iso; }
+function renderHist(){
+  contarHist();
+  const q = ($('histBusca').value||'').toLowerCase().trim();
+  const lista = hist.filter(h => !q || [h.campos.cliente, h.campos.numero, h.campos.contato, ...h.itens.map(i=>i.desc)].join(' ').toLowerCase().includes(q));
+  if(!lista.length){ $('histLista').innerHTML = `<div class="vazio">${hist.length ? 'Nada encontrado.' : 'Nenhum orçamento no histórico ainda.'}</div>`; return; }
+  $('histLista').innerHTML = lista.map(h=>`<div class="hcard${h.id===origemId?' aberto':''}">
+    <div class="hrow">
+      <div>
+        <div class="hnum">Orçamento Nº ${esc(h.campos.numero||'-')} · ${fmtData(h.campos.data)}${h.id===origemId?' · aberto agora':''}</div>
+        <div class="hcli">${esc(h.campos.cliente || 'Sem cliente')}</div>
+        <div class="hmeta">${fmtN(h.pecas,0)} peças · ${h.itens.length} ${h.itens.length>1?'itens':'item'}</div>
+      </div>
+      <div class="htot">${brl(h.total)}<small>lucro ${brl(h.total - h.custoTot)}</small></div>
+    </div>
+    <div class="hitens">${h.itens.map(i=>`${fmtN(num(i.qtd),0)}× ${esc(i.desc||'Item')}`).join(' · ')}</div>
+    <div class="hacts">
+      <button class="btn ghost small" data-habrir="${h.id}">Abrir</button>
+      <button class="btn ghost small" data-hdup="${h.id}">Duplicar como novo</button>
+      <button class="btn ghost small danger" data-hdel="${h.id}">Excluir</button>
+    </div>
+  </div>`).join('');
+}
+function carregarRegistro(h, comoNovo){
+  CAMPOS.forEach(c=>{ $(c).value = h.campos[c] ?? ''; });
+  itens = h.itens.map(x=>novoItem(JSON.parse(JSON.stringify(x))));
+  if(comoNovo){ $('numero').value = String(cfg.proxNumero); $('data').value = hoje(); origemId = null; }
+  else origemId = h.id;
+  store.set('orc3d_origem', origemId);
+  renderItens(); atualizar(); salvarRascunho(); contarHist();
+  document.querySelector('nav button[data-tab=orc]').click();
+}
+$('histBusca').addEventListener('input', renderHist);
+$('histLista').addEventListener('click', ev=>{
+  const ab = ev.target.closest('[data-habrir]'), du = ev.target.closest('[data-hdup]'), de = ev.target.closest('[data-hdel]');
+  if(ab || du){
+    const h = hist.find(x=>x.id===(ab||du).dataset[ab?'habrir':'hdup']); if(!h) return;
+    if(origemId !== h.id) guardarAtualNoHistorico();   // não perde o que estava na tela
+    carregarRegistro(h, !!du);
+    toast(du ? 'Cópia criada como Nº '+$('numero').value : 'Orçamento Nº '+(h.campos.numero||'')+' aberto');
+  }
+  if(de){
+    if(de.dataset.conf !== '1'){ de.dataset.conf='1'; de.textContent='Confirmar exclusão?'; setTimeout(()=>{ if(de.isConnected){ de.dataset.conf=''; de.textContent='Excluir'; } }, 3500); return; }
+    hist = hist.filter(x=>x.id!==de.dataset.hdel);
+    if(origemId === de.dataset.hdel){ origemId = null; store.set('orc3d_origem', null); }
+    salvarHist(); renderHist(); toast('Orçamento excluído');
+  }
+});
+
+$('btnNovo').onclick = ()=>{
+  const guardou = guardarAtualNoHistorico();
+  if(guardou && num($('numero').value) >= cfg.proxNumero){ cfg.proxNumero = num($('numero').value) + 1; saveCfg(); }
+  origemId = null; store.set('orc3d_origem', null);
+  novoOrcamento(); contarHist(); window.scrollTo({top:0,behavior:'smooth'});
+  toast((guardou ? 'Anterior salvo no Histórico · ' : '') + 'Novo orçamento Nº '+cfg.proxNumero);
+};
 
 /* ---------- configurações ---------- */
 function renderCfg(){
@@ -578,9 +684,9 @@ $('logoDel').onclick = ()=>{ cfg.logo=null; saveCfg(); mostrarLogo(); $('logoFil
 /* ---------- abas ---------- */
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on', x===b));
-  $('tab-orc').classList.toggle('hide', b.dataset.tab!=='orc');
-  $('tab-cfg').classList.toggle('hide', b.dataset.tab!=='cfg');
+  ['orc','cfg','hist'].forEach(t=> $('tab-'+t).classList.toggle('hide', b.dataset.tab!==t));
   $('bar').classList.toggle('hide', b.dataset.tab!=='orc');
+  if(b.dataset.tab==='hist') renderHist();
   window.scrollTo({top:0});
 });
 
@@ -781,7 +887,7 @@ $('btnPdf2').onclick = baixar;
 
 /* ---------- início ---------- */
 aplicarCfgNaTela();
-carregarRascunho(); atualizar();
+carregarRascunho(); atualizar(); contarHist();
 iniciarNuvem();
 
 /* ---------- app instalável ---------- */
