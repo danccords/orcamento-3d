@@ -672,7 +672,7 @@ function gerarPDF(){
     // miniatura do objeto (opcional)
     let iw = 0, ih = 0;
     if(it.img){ const rt = (it.imgW||1)/(it.imgH||1); ih = 20; iw = ih*rt; if(iw > 26){ iw = 26; ih = iw/rt; } }
-    const xT = M + (it.img ? 30 : 0), wT = CW*0.55 - (it.img ? 30 : 0);
+    const temFoto = itens.some(x=>x.img); const xT = M + (temFoto ? 30 : 0), wT = CW*0.55 - (temFoto ? 30 : 0);
     d.setFont('helvetica','bold'); d.setFontSize(10.5);
     const titulo = d.splitTextToSize(`${i+1}. ${it.desc || 'Item '+(i+1)}`, wT);
     const det = [it.material, it.cor, fmtN(l.g)+' g', fmtTempo(it)+' por peça', it.equipamento].filter(Boolean).join('  ·  ');
