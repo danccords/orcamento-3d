@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#14161a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Orçamento 3D">
+<title>Orçamento 3D – DH Tech</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#f3f1ec; --card:#ffffff; --ink:#14161a; --muted:#6b6f76; --line:#e3e0d8;
+    --accent:#ff6a1a; --accent-ink:#fff; --ok:#1f8a4c; --soft:#faf8f4;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  header{background:var(--ink);color:#fff;padding:18px 20px 0;position:sticky;top:0;z-index:5}
+  .brand{display:flex;align-items:center;gap:12px;max-width:980px;margin:0 auto}
+  .logo{width:38px;height:38px;border-radius:10px;background:var(--accent);display:grid;place-items:center;font-weight:800;font-size:15px;letter-spacing:-.5px;overflow:hidden}
+  .logo.img{background:#fff;width:auto;min-width:38px;max-width:110px;padding:3px}
+  .logo img{max-height:32px;max-width:104px;display:block}
+  .brand h1{font-size:17px;margin:0;font-weight:800;letter-spacing:-.2px}
+  .brand p{margin:0;font-size:12px;color:#a9adb5}
+  nav{display:flex;gap:4px;max-width:980px;margin:14px auto 0}
+  nav button{flex:0 0 auto;background:none;border:0;color:#a9adb5;font:inherit;font-weight:700;font-size:14px;padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer}
+  nav button.on{color:#fff;border-color:var(--accent)}
+  main{max-width:980px;margin:0 auto;padding:18px 16px 140px}
+  .grid{display:grid;grid-template-columns:1fr;gap:16px}
+  @media(min-width:860px){.grid{grid-template-columns:1.35fr 1fr}.sticky{position:sticky;top:120px;align-self:start}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 14px;font-weight:800}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  @media(max-width:520px){.row3{grid-template-columns:1fr 1fr}}
+  label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px}
+  .f{margin-bottom:12px}
+  input,select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:11px 12px;outline:none;transition:border-color .15s,box-shadow .15s}
+  textarea{resize:vertical;min-height:70px}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,106,26,.15);background:#fff}
+  .unit{position:relative}
+  .unit span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);pointer-events:none;font-weight:600}
+  .unit input{padding-right:40px}
+  .res{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px}
+  .res:last-child{border-bottom:0}
+  .res b{font-variant-numeric:tabular-nums}
+  .res.muted{color:var(--muted)}
+  .big{background:var(--ink);color:#fff;border-radius:12px;padding:16px;margin:12px 0}
+  .big small{display:block;color:#a9adb5;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+  .big .v{font-size:32px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+  .big .u{font-size:14px;color:#d0d3d8;margin-top:4px}
+  .profit{color:var(--ok)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:800;font-size:15px;border:0;border-radius:12px;padding:14px 18px;cursor:pointer}
+  .btn.primary{background:var(--accent);color:var(--accent-ink);width:100%;font-size:16px;padding:16px}
+  .btn.primary:active{transform:translateY(1px)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  .btn.small{padding:8px 12px;font-size:13px;border-radius:9px}
+  .bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(243,241,236,.92);backdrop-filter:blur(8px);border-top:1px solid var(--line);z-index:6}
+  .bar .in{max-width:980px;margin:0 auto;display:flex;gap:10px;align-items:center}
+  .bar .tot{flex:0 0 auto;min-width:120px}
+  .bar .tot small{display:block;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+  .bar .tot b{font-size:20px;font-variant-numeric:tabular-nums}
+  @media(min-width:860px){.bar{display:none}}
+  .hide{display:none!important}
+  table.cfg{width:100%;border-collapse:collapse;font-size:14px}
+  table.cfg th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:0 6px 6px;font-weight:800}
+  table.cfg td{padding:4px 4px}
+  table.cfg input{padding:9px 10px;font-size:15px}
+  table.cfg td.calc{font-size:13px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums;padding-left:8px}
+  .del{background:none;border:0;color:#b3392f;font-size:20px;cursor:pointer;padding:4px 8px}
+  .scroll{overflow-x:auto}
+  .note{font-size:12.5px;color:var(--muted);line-height:1.5}
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:.25s;z-index:20;max-width:90vw;text-align:center}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .logoprev{max-height:56px;max-width:180px;border-radius:8px;border:1px solid var(--line);background:#fff;padding:4px}
+  .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .mt{margin-top:16px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo" id="hdrLogo">3D</div>
+    <div style="flex:1"><h1 id="hdrName">DH Tech 3D</h1><p>Calculadora de orçamento de impressão</p></div>
+    <button class="btn small hide" id="btnInstalar" style="background:#fff;color:#14161a">Instalar app</button>
+  </div>
+  <nav>
+    <button class="on" data-tab="orc">Orçamento</button>
+    <button data-tab="cfg">Custos e configurações</button>
+  </nav>
+</header>
+
+<main>
+<!-- ===================== ORÇAMENTO ===================== -->
+<section id="tab-orc">
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h2>Cliente</h2>
+        <div class="row">
+          <div class="f"><label>Orçamento Nº</label><input id="numero" inputmode="numeric"></div>
+          <div class="f"><label>Data</label><input id="data" type="date"></div>
+        </div>
+        <div class="f"><label>Cliente</label><input id="cliente" placeholder="Nome ou empresa"></div>
+        <div class="row">
+          <div class="f"><label>CNPJ / CPF</label><input id="cnpj"></div>
+          <div class="f"><label>Contato</label><input id="contato"></div>
+        </div>
+        <div class="row">
+          <div class="f"><label>Endereço</label><input id="endereco"></div>
+          <div class="f"><label>Cidade</label><input id="cidade"></div>
+        </div>
+      </div>
+
+      <div class="card mt">
+        <h2>Descrição do serviço</h2>
+        <div class="f"><textarea id="descricao" placeholder="Ex.: Impressão de porta canetas"></textarea></div>
+      </div>
+
+      <div class="card mt">
+        <h2>Impressão</h2>
+        <div class="row">
+          <div class="f"><label>Material</label><select id="material"></select></div>
+          <div class="f"><label>Cor</label><input id="cor" placeholder="Ex.: Preto"></div>
+        </div>
+        <div class="row3">
+          <div class="f"><label>Filamento por peça</label><div class="unit"><input id="gramas" type="number" inputmode="decimal" min="0" step="any"><span>g</span></div></div>
+          <div class="f"><label>Tempo por peça</label><div class="unit"><input id="horas" type="number" inputmode="decimal" min="0" step="any"><span>h</span></div></div>
+          <div class="f"><label>Quantidade de peças</label><div class="unit"><input id="pecas" type="number" inputmode="numeric" min="1" step="1"><span>un</span></div></div>
+        </div>
+        <div class="row">
+          <div class="f"><label>Equipamento</label><select id="equipamento"></select></div>
+          <div class="f"><label>Margem de lucro</label><div class="unit"><input id="margem" type="number" inputmode="decimal" step="any"><span>%</span></div></div>
+        </div>
+      </div>
+
+      <div class="card mt">
+        <h2>Condições</h2>
+        <div class="f"><label>Prazo</label><input id="prazo"></div>
+        <div class="f"><label>Faturamento</label><textarea id="faturamento"></textarea></div>
+        <div class="f"><label>Observações</label><textarea id="obs" placeholder="Opcional"></textarea></div>
+      </div>
+    </div>
+
+    <div class="sticky">
+      <div class="card">
+        <h2>Resultado</h2>
+        <div class="res muted"><span>Custo do filamento / peça</span><b id="rMat">–</b></div>
+        <div class="res muted"><span>Custo da máquina / peça</span><b id="rMaq">–</b></div>
+        <div class="res"><span>Custo unitário</span><b id="rCusto">–</b></div>
+        <div class="big">
+          <small>Valor total</small>
+          <div class="v" id="rTotal">–</div>
+          <div class="u">Valor unitário: <b id="rUnit">–</b></div>
+        </div>
+        <div class="res"><span>Custo total</span><b id="rCustoTot">–</b></div>
+        <div class="res"><span>Lucro total</span><b id="rLucro" class="profit">–</b></div>
+        <button class="btn primary mt" id="btnPdf">Gerar orçamento (PDF)</button>
+        <div class="flex mt">
+          <button class="btn ghost small" id="btnNovo">Novo orçamento</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CONFIGURAÇÕES ===================== -->
+<section id="tab-cfg" class="hide">
+  <div class="card">
+    <h2>Filamentos</h2>
+    <div class="scroll">
+      <table class="cfg">
+        <thead><tr><th>Filamento</th><th>Peso do rolo (g)</th><th>Valor do rolo (R$)</th><th>R$/grama</th><th></th></tr></thead>
+        <tbody id="tbFil"></tbody>
+      </table>
+    </div>
+    <button class="btn ghost small mt" id="addFil">+ Adicionar filamento</button>
+  </div>
+
+  <div class="card mt">
+    <h2>Equipamentos</h2>
+    <div class="scroll">
+      <table class="cfg">
+        <thead><tr><th>Equipamento</th><th>Valor (R$)</th><th>Potência (W)</th><th>Manutenção/ano (R$)</th><th>R$/hora</th><th></th></tr></thead>
+        <tbody id="tbEq"></tbody>
+      </table>
+    </div>
+    <button class="btn ghost small mt" id="addEq">+ Adicionar equipamento</button>
+  </div>
+
+  <div class="card mt">
+    <h2>Parâmetros</h2>
+    <div class="row">
+      <div class="f"><label>Valor da energia (R$/kWh)</label><input id="kwh" type="number" inputmode="decimal" step="any"></div>
+      <div class="f"><label>Tempo de retorno (meses)</label><input id="retorno" type="number" inputmode="decimal" step="any"></div>
+    </div>
+    <div class="row">
+      <div class="f"><label>Depreciação ao ano (%)</label><input id="deprec" type="number" inputmode="decimal" step="any"></div>
+      <div class="f"><label>Margem de lucro padrão (%)</label><input id="margemPad" type="number" inputmode="decimal" step="any"></div>
+    </div>
+    <div class="row">
+      <div class="f"><label>Horas de uso por mês</label><input id="horasMes" type="number" inputmode="decimal" step="any"></div>
+      <div></div>
+    </div>
+    <p class="note">Valor/hora da máquina = (potência ÷ 1000 × valor do kWh) + (custo anual ÷ (meses de retorno × horas por mês)). Custo anual = valor do equipamento × depreciação + manutenção — igual à sua planilha (que usa 160 h/mês).</p>
+  </div>
+
+  <div class="card mt">
+    <h2>Sua empresa (aparece no PDF)</h2>
+    <div class="row">
+      <div class="f"><label>Nome</label><input id="empNome"></div>
+      <div class="f"><label>E-mail</label><input id="empEmail"></div>
+    </div>
+    <div class="row">
+      <div class="f"><label>Telefone / WhatsApp</label><input id="empTel" placeholder="Opcional"></div>
+      <div class="f"><label>Subtítulo</label><input id="empSub"></div>
+    </div>
+    <div class="f"><label>Mensagem de abertura</label><input id="empIntro"></div>
+    <div class="row">
+      <div class="f"><label>Prazo padrão</label><input id="padPrazo"></div>
+      <div class="f"><label>Faturamento padrão</label><textarea id="padFat"></textarea></div>
+    </div>
+    <div class="f">
+      <label>Logo (opcional)</label>
+      <div class="flex">
+        <img id="logoPrev" class="logoprev hide" alt="Logo">
+        <input id="logoFile" type="file" accept="image/png,image/jpeg" style="max-width:260px">
+        <button class="btn ghost small hide" id="logoDel">Remover logo</button>
+      </div>
+    </div>
+    <p class="note" id="notaSalvo">As configurações e o logo ficam salvos neste aparelho. Para levar para outro aparelho, use "Exportar" aqui e "Importar" no outro.</p>
+    <div class="flex">
+      <button class="btn ghost small" id="btnExport">Exportar configurações</button>
+      <label class="btn ghost small" style="margin:0;color:var(--ink)">Importar configurações<input type="file" id="fileImport" accept=".json,application/json" class="hide"></label>
+    </div>
+  </div>
+</section>
+</main>
+
+<div class="bar" id="bar">
+  <div class="in">
+    <div class="tot"><small>Total</small><b id="bTotal">–</b></div>
+    <button class="btn primary" id="btnPdf2">Gerar orçamento</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- armazenamento seguro ---------- */
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+
+/* ---------- valores padrão (da planilha) ---------- */
+const DEF = {
+  filamentos:[
+    {nome:'PLA', peso:1000, valor:120},
+    {nome:'ABS', peso:1000, valor:80},
+    {nome:'PETG', peso:1000, valor:140}
+  ],
+  equipamentos:[
+    {nome:'Bambulab A1', valor:5000, watts:200, manut:0},
+    {nome:'Tycoon Slim', valor:1457, watts:200, manut:0}
+  ],
+  kwh:1, retorno:12, deprec:10, margem:20, horasMes:160,
+  empNome:'DH Tech 3D', empEmail:'dhtech3d@gmail.com', empTel:'', empSub:'Impressão 3D sob medida',
+  empIntro:'Agradecemos o seu contato, apresento aqui a proposta.',
+  padPrazo:'10 dias',
+  padFat:'Pagamento à vista com 5% de desconto\nParcelamento com juros da maquininha',
+  logo:null, proxNumero:1
+};
+let cfg = Object.assign(JSON.parse(JSON.stringify(DEF)), store.get('orc3d_cfg', {}));
+
+const $ = id => document.getElementById(id);
+const num = v => { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : 0; };
+const brl = v => v.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+const fmtN = (v, d=2) => v.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:d});
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'), 2600); }
+function saveCfg(){ cfg._ts = Date.now(); store.set('orc3d_cfg', cfg); agendarNuvem(); }
+
+/* ---------- sincronização na conta (vale para celular e computador) ---------- */
+let nuvem = null, nuvemOcupada = false, nuvemPendente = false, nuvemTimer = null;
+function agendarNuvem(){ if(!nuvem) return; clearTimeout(nuvemTimer); nuvemTimer = setTimeout(enviarNuvem, 800); }
+async function enviarNuvem(){
+  if(!nuvem) return;
+  if(nuvemOcupada){ nuvemPendente = true; return; }
+  nuvemOcupada = true;
+  try{ await nuvem.set({cfg: JSON.parse(JSON.stringify(cfg))}); }
+  catch(e){ if(e && e.code==='quota_exceeded') toast('Logo grande demais para salvar na conta'); }
+  nuvemOcupada = false;
+  if(nuvemPendente){ nuvemPendente = false; enviarNuvem(); }
+}
+async function iniciarNuvem(){
+  try{
+    if(!window.claude || !claude.use) return;
+    const db = await claude.use('db'); const user = await claude.use('user');
+    const uid = user ? await user.id() : null;
+    if(!db || !uid) return;
+    const ref = db.doc('data/users/' + uid + '/config');
+    const snap = await ref.get();
+    const remoto = snap.exists ? (snap.data().cfg || null) : null;
+    nuvem = ref;
+    $('notaSalvo').textContent = 'As configurações e o logo ficam salvos na sua conta Claude, então valem no celular e no computador.';
+    if(remoto && (remoto._ts||0) > (cfg._ts||0)){
+      cfg = Object.assign(JSON.parse(JSON.stringify(DEF)), remoto);
+      store.set('orc3d_cfg', cfg);
+      aplicarCfgNaTela(); atualizar();
+    } else if(!remoto || (cfg._ts||0) > (remoto._ts||0)){
+      if(!cfg._ts) cfg._ts = Date.now();
+      enviarNuvem();
+    }
+  }catch(e){}
+}
+
+/* ---------- fórmulas (iguais à planilha) ---------- */
+const valorGrama = f => f.peso > 0 ? f.valor / f.peso : 0;                       // E = D/C
+const custoAno   = e => e.valor * (cfg.deprec/100) + e.manut;                      // L = H*deprec + manut
+const valorHora  = e => (e.watts/1000 * cfg.kwh) + (cfg.retorno*cfg.horasMes > 0 ? custoAno(e)/(cfg.retorno*cfg.horasMes) : 0); // M
+
+function calcular(){
+  const fil = cfg.filamentos[$('material').selectedIndex] || {peso:0,valor:0};
+  const eq  = cfg.equipamentos[$('equipamento').selectedIndex] || {valor:0,watts:0,manut:0};
+  const g = num($('gramas').value), h = num($('horas').value), q = num($('pecas').value), m = num($('margem').value)/100;
+  const cMat = valorGrama(fil) * g;
+  const cMaq = valorHora(eq) * h;
+  const custo = cMat + cMaq;                 // BASE!H10
+  const unit = custo * (1 + m);              // VALORES!D30
+  const total = unit * q;                    // VALORES!D31
+  const lucro = total - custo * q;           // BASE!H11
+  return {fil, eq, g, h, q, m, cMat, cMaq, custo, unit, total, lucro};
+}
+
+/* ---------- formulário de orçamento ---------- */
+const CAMPOS = ['numero','data','cliente','cnpj','contato','endereco','cidade','descricao','material','cor','gramas','horas','pecas','equipamento','margem','prazo','faturamento','obs'];
+
+function preencherSelects(){
+  const mSel = $('material'), eSel = $('equipamento');
+  const mv = mSel.value, ev = eSel.value;
+  mSel.innerHTML = cfg.filamentos.map(f=>`<option>${esc(f.nome)}</option>`).join('');
+  eSel.innerHTML = cfg.equipamentos.map(e=>`<option>${esc(e.nome)}</option>`).join('');
+  if([...mSel.options].some(o=>o.value===mv)) mSel.value = mv;
+  if([...eSel.options].some(o=>o.value===ev)) eSel.value = ev;
+}
+function esc(s){ return String(s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function hoje(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+function novoOrcamento(){
+  const rasc = {numero:String(cfg.proxNumero), data:hoje(), margem:String(cfg.margem), prazo:cfg.padPrazo, faturamento:cfg.padFat, pecas:'1'};
+  CAMPOS.forEach(c=>{ const el=$(c); if(el.tagName!=='SELECT') el.value = rasc[c] ?? ''; });
+  $('material').selectedIndex = 0; $('equipamento').selectedIndex = 0;
+  salvarRascunho(); atualizar();
+}
+function salvarRascunho(){ const r={}; CAMPOS.forEach(c=>r[c]=$(c).value); store.set('orc3d_rasc', r); }
+function carregarRascunho(){
+  const r = store.get('orc3d_rasc', null);
+  if(!r){
+    // exemplo da planilha
+    const ex = {numero:String(cfg.proxNumero), data:hoje(), cliente:'Rarità Convites', contato:'Jonas', descricao:'Impressão de porta canetas',
+      material:'PLA', cor:'Preto', gramas:'120', horas:'6', pecas:'10', equipamento:'Tycoon Slim', margem:String(cfg.margem), prazo:cfg.padPrazo, faturamento:cfg.padFat};
+    CAMPOS.forEach(c=>{ if(ex[c]!==undefined) $(c).value = ex[c]; });
+    return;
+  }
+  CAMPOS.forEach(c=>{ if(r[c]!==undefined) $(c).value = r[c]; });
+}
+
+function atualizar(){
+  const r = calcular();
+  $('rMat').textContent = brl(r.cMat);
+  $('rMaq').textContent = brl(r.cMaq);
+  $('rCusto').textContent = brl(r.custo);
+  $('rUnit').textContent = brl(r.unit);
+  $('rTotal').textContent = brl(r.total);
+  $('bTotal').textContent = brl(r.total);
+  $('rCustoTot').textContent = brl(r.custo*r.q);
+  $('rLucro').textContent = brl(r.lucro);
+}
+CAMPOS.forEach(c=>{ $(c).addEventListener('input', ()=>{ atualizar(); salvarRascunho(); }); $(c).addEventListener('change', ()=>{ atualizar(); salvarRascunho(); }); });
+$('btnNovo').onclick = ()=>{ novoOrcamento(); window.scrollTo({top:0,behavior:'smooth'}); toast('Novo orçamento Nº '+cfg.proxNumero); };
+
+/* ---------- configurações ---------- */
+function renderCfg(){
+  $('tbFil').innerHTML = cfg.filamentos.map((f,i)=>`<tr>
+    <td><input data-t="f" data-i="${i}" data-k="nome" value="${esc(f.nome)}"></td>
+    <td><input data-t="f" data-i="${i}" data-k="peso" type="number" inputmode="decimal" step="any" value="${f.peso}"></td>
+    <td><input data-t="f" data-i="${i}" data-k="valor" type="number" inputmode="decimal" step="any" value="${f.valor}"></td>
+    <td class="calc" id="fg${i}">${brl(valorGrama(f))}</td>
+    <td><button class="del" data-del="f" data-i="${i}" title="Remover">×</button></td></tr>`).join('');
+  $('tbEq').innerHTML = cfg.equipamentos.map((e,i)=>`<tr>
+    <td><input data-t="e" data-i="${i}" data-k="nome" value="${esc(e.nome)}"></td>
+    <td><input data-t="e" data-i="${i}" data-k="valor" type="number" inputmode="decimal" step="any" value="${e.valor}"></td>
+    <td><input data-t="e" data-i="${i}" data-k="watts" type="number" inputmode="decimal" step="any" value="${e.watts}"></td>
+    <td><input data-t="e" data-i="${i}" data-k="manut" type="number" inputmode="decimal" step="any" value="${e.manut}"></td>
+    <td class="calc" id="eh${i}">${brl(valorHora(e))}</td>
+    <td><button class="del" data-del="e" data-i="${i}" title="Remover">×</button></td></tr>`).join('');
+}
+function atualizarCalcCfg(){
+  cfg.filamentos.forEach((f,i)=>{ const el=$('fg'+i); if(el) el.textContent = 'R$ '+fmtN(valorGrama(f),4); });
+  cfg.equipamentos.forEach((e,i)=>{ const el=$('eh'+i); if(el) el.textContent = 'R$ '+fmtN(valorHora(e),4); });
+}
+document.addEventListener('input', ev=>{
+  const t = ev.target;
+  if(t.dataset && t.dataset.t){
+    const list = t.dataset.t==='f' ? cfg.filamentos : cfg.equipamentos;
+    const it = list[+t.dataset.i]; const k = t.dataset.k;
+    it[k] = k==='nome' ? t.value : num(t.value);
+    saveCfg(); atualizarCalcCfg();
+    if(k==='nome') preencherSelects();
+    atualizar();
+  }
+});
+document.addEventListener('click', ev=>{
+  const b = ev.target.closest('[data-del]'); if(!b) return;
+  const list = b.dataset.del==='f' ? cfg.filamentos : cfg.equipamentos;
+  if(list.length<=1){ toast('Mantenha pelo menos um item'); return; }
+  list.splice(+b.dataset.i,1); saveCfg(); renderCfg(); atualizarCalcCfg(); preencherSelects(); atualizar();
+});
+$('addFil').onclick = ()=>{ cfg.filamentos.push({nome:'Novo',peso:1000,valor:0}); saveCfg(); renderCfg(); atualizarCalcCfg(); preencherSelects(); };
+$('addEq').onclick  = ()=>{ cfg.equipamentos.push({nome:'Nova impressora',valor:0,watts:0,manut:0}); saveCfg(); renderCfg(); atualizarCalcCfg(); preencherSelects(); };
+
+const PARAMS = {kwh:'kwh', retorno:'retorno', deprec:'deprec', margemPad:'margem', horasMes:'horasMes',
+  empNome:'empNome', empEmail:'empEmail', empTel:'empTel', empSub:'empSub', empIntro:'empIntro', padPrazo:'padPrazo', padFat:'padFat'};
+const NUMP = ['kwh','retorno','deprec','margemPad','horasMes'];
+Object.entries(PARAMS).forEach(([id,k])=>{
+  $(id).addEventListener('input', ()=>{
+    cfg[k] = NUMP.includes(id) ? num($(id).value) : $(id).value;
+    saveCfg(); atualizarCalcCfg(); atualizar();
+    if(id==='empNome') $('hdrName').textContent = cfg.empNome || 'Orçamento 3D';
+  });
+});
+
+function mostrarLogo(){
+  const h = $('hdrLogo');
+  if(cfg.logo){
+    $('logoPrev').src = cfg.logo; $('logoPrev').classList.remove('hide'); $('logoDel').classList.remove('hide');
+    h.innerHTML = ''; const im = new Image(); im.src = cfg.logo; im.alt = 'Logo'; h.appendChild(im); h.classList.add('img');
+  } else {
+    $('logoPrev').classList.add('hide'); $('logoDel').classList.add('hide');
+    h.textContent = '3D'; h.classList.remove('img');
+  }
+}
+function aplicarCfgNaTela(){
+  Object.entries(PARAMS).forEach(([id,k])=>{ $(id).value = cfg[k] ?? ''; });
+  $('hdrName').textContent = cfg.empNome || 'Orçamento 3D';
+  preencherSelects(); renderCfg(); atualizarCalcCfg(); mostrarLogo();
+}
+$('logoFile').onchange = e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    const img = new Image();
+    img.onload = ()=>{ // reduz para caber no armazenamento
+      const s = Math.min(1, 400/Math.max(img.width,img.height));
+      const c = document.createElement('canvas'); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
+      const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(img,0,0,c.width,c.height);
+      cfg.logo = c.toDataURL('image/jpeg',0.88); cfg.logoW=c.width; cfg.logoH=c.height; saveCfg(); mostrarLogo(); toast('Logo salvo — já vai aparecer no PDF');
+    };
+    img.onerror = ()=> toast('Não consegui ler essa imagem. Use PNG ou JPG.');
+    img.src = rd.result;
+  };
+  rd.readAsDataURL(f);
+};
+$('logoDel').onclick = ()=>{ cfg.logo=null; saveCfg(); mostrarLogo(); $('logoFile').value=''; };
+
+/* ---------- abas ---------- */
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on', x===b));
+  $('tab-orc').classList.toggle('hide', b.dataset.tab!=='orc');
+  $('tab-cfg').classList.toggle('hide', b.dataset.tab!=='cfg');
+  $('bar').classList.toggle('hide', b.dataset.tab!=='orc');
+  window.scrollTo({top:0});
+});
+
+/* ---------- PDF A4 ---------- */
+let downloads = null;
+(async()=>{ try{ if(window.claude && claude.use) downloads = await claude.use('downloads'); }catch(e){} })();
+
+function gerarPDF(){
+  if(!window.jspdf){ toast('Sem conexão: não foi possível carregar o gerador de PDF'); return null; }
+  const { jsPDF } = window.jspdf;
+  const r = calcular();
+  const d = jsPDF ? new jsPDF({unit:'mm', format:'a4'}) : null;
+  const W = 210, M = 18, CW = W - 2*M;
+  const ACC = [255,106,26], INK = [20,22,26], MUT = [110,114,120], LINE = [225,222,215];
+  let y = 18;
+
+  // ---- cabeçalho
+  let tx = M;
+  if(cfg.logo){
+    const ratio = (cfg.logoW||1)/(cfg.logoH||1); let h = 18, w = h*ratio; if(w > 45){ w = 45; h = w/ratio; }
+    try{ d.addImage(cfg.logo, 'JPEG', M, y-2, w, h); tx = M + w + 6; }catch(e){ toast('Não foi possível colocar o logo no PDF'); }
+  }
+  d.setTextColor(...INK); d.setFont('helvetica','bold'); d.setFontSize(20);
+  d.text('PROPOSTA COMERCIAL', tx, y+5);
+  d.setFont('helvetica','normal'); d.setFontSize(10.5); d.setTextColor(...MUT);
+  d.text(cfg.empSub || '', tx, y+11);
+
+  d.setFont('helvetica','bold'); d.setFontSize(11); d.setTextColor(...INK);
+  d.text(cfg.empNome || '', W-M, y+1, {align:'right'});
+  d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor(...MUT);
+  let yy = y+6;
+  if(cfg.empEmail){ d.text(cfg.empEmail, W-M, yy, {align:'right'}); yy+=4.5; }
+  if(cfg.empTel){ d.text(cfg.empTel, W-M, yy, {align:'right'}); yy+=4.5; }
+  const dt = $('data').value ? $('data').value.split('-').reverse().join('/') : '';
+  d.text(dt, W-M, yy, {align:'right'});
+
+  y += 20;
+  d.setFillColor(...ACC); d.rect(M, y, CW, 1.2, 'F');
+  y += 9;
+
+  // ---- nº orçamento
+  d.setFont('helvetica','bold'); d.setFontSize(12); d.setTextColor(...INK);
+  d.text('ORÇAMENTO Nº ' + ($('numero').value || ''), M, y);
+  y += 8;
+
+  // ---- cliente
+  const linhas = [['Cliente',$('cliente').value],['CNPJ/CPF',$('cnpj').value],['Endereço',$('endereco').value],['Cidade',$('cidade').value],['Contato',$('contato').value]]
+    .filter(l=>l[1] && l[1].trim());
+  d.setFontSize(10);
+  linhas.forEach(([k,v])=>{
+    d.setFont('helvetica','bold'); d.setTextColor(...MUT); d.text(k, M, y);
+    d.setFont('helvetica','normal'); d.setTextColor(...INK);
+    const t = d.splitTextToSize(v, CW-32); d.text(t, M+32, y); y += 5.5*t.length;
+  });
+  y += 3;
+  if(cfg.empIntro){
+    d.setFont('helvetica','italic'); d.setTextColor(...MUT); d.setFontSize(10);
+    const t = d.splitTextToSize(cfg.empIntro, CW); d.text(t, M, y); y += 5*t.length + 3;
+  }
+
+  const secao = (tit)=>{
+    if(y > 262){ d.addPage(); y = 20; }
+    d.setFont('helvetica','bold'); d.setFontSize(10.5); d.setTextColor(...ACC);
+    d.text(tit.toUpperCase(), M, y); y += 2;
+    d.setDrawColor(...LINE); d.setLineWidth(0.3); d.line(M, y, W-M, y); y += 6;
+    d.setTextColor(...INK); d.setFont('helvetica','normal'); d.setFontSize(10);
+  };
+  const paragrafo = (txt)=>{
+    const t = d.splitTextToSize(txt || '-', CW);
+    t.forEach(l=>{ if(y>280){ d.addPage(); y=20; } d.text(l, M, y); y += 5; });
+    y += 4;
+  };
+
+  // ---- descrição
+  secao('Descrição do serviço');
+  paragrafo($('descricao').value);
+
+  // ---- valores
+  secao('Valores');
+  const itens = [
+    ['Material', $('material').value],
+    ['Cor', $('cor').value || '-'],
+    ['Filamento por peça', fmtN(r.g)+' g'],
+    ['Tempo de impressão por peça', fmtN(r.h)+' h'],
+    ['Quantidade de peças', fmtN(r.q,0)+' un'],
+    ['Equipamento', $('equipamento').value]
+  ];
+  const colW = CW/2;
+  itens.forEach((it,i)=>{
+    const cx = M + (i%2)*colW, cy = y + Math.floor(i/2)*11;
+    d.setFontSize(8.5); d.setTextColor(...MUT); d.setFont('helvetica','bold');
+    d.text(it[0].toUpperCase(), cx, cy);
+    d.setFontSize(10.5); d.setTextColor(...INK); d.setFont('helvetica','normal');
+    d.text(String(it[1]), cx, cy+5);
+  });
+  y += Math.ceil(itens.length/2)*11 + 2;
+
+  // caixa de valores
+  d.setFillColor(20,22,26); d.roundedRect(M, y, CW, 22, 2.5, 2.5, 'F');
+  d.setTextColor(170,174,180); d.setFontSize(8.5); d.setFont('helvetica','bold');
+  d.text('VALOR UNITÁRIO', M+7, y+8);
+  d.text('VALOR TOTAL', W-M-7, y+8, {align:'right'});
+  d.setTextColor(255,255,255); d.setFontSize(13);
+  d.text(brl(r.unit), M+7, y+16);
+  d.setTextColor(...ACC); d.setFontSize(17);
+  d.text(brl(r.total), W-M-7, y+16.5, {align:'right'});
+  y += 32;
+
+  // ---- prazos, faturamento, obs
+  secao('Prazos');
+  paragrafo($('prazo').value);
+  secao('Faturamento');
+  paragrafo($('faturamento').value);
+  if($('obs').value.trim()){ secao('Observações'); paragrafo($('obs').value); }
+
+  // ---- rodapé
+  const pages = d.getNumberOfPages();
+  for(let p=1;p<=pages;p++){
+    d.setPage(p);
+    d.setDrawColor(...LINE); d.line(M, 281, W-M, 281);
+    d.setFont('helvetica','bold'); d.setFontSize(10); d.setTextColor(...INK);
+    d.text('Agradecemos a preferência!', W/2, 287, {align:'center'});
+    d.setFont('helvetica','normal'); d.setFontSize(8); d.setTextColor(...MUT);
+    d.text([cfg.empNome, cfg.empEmail, cfg.empTel].filter(Boolean).join('  ·  '), W/2, 291.5, {align:'center'});
+  }
+  return d;
+}
+
+function nomeArquivo(){
+  const n = $('numero').value || 'sem-numero';
+  const c = ($('cliente').value || '').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w\- ]/g,'').trim().replace(/\s+/g,'_');
+  return `Orcamento_${n}${c ? '_'+c : ''}.pdf`;
+}
+
+async function baixar(){
+  const d = gerarPDF(); if(!d) return;
+  const fname = nomeArquivo();
+  const blob = d.output('blob');
+  const ok = await salvarArquivo(fname, blob);
+  if(ok){
+    toast('PDF gerado: '+fname);
+    // avança a numeração se este é o número atual
+    if(num($('numero').value) >= cfg.proxNumero){ cfg.proxNumero = num($('numero').value) + 1; saveCfg(); }
+  } else toast('Não foi possível salvar o PDF aqui');
+}
+async function salvarArquivo(nome, blob){
+  if(downloads){
+    try{ await downloads.save({filename:nome, data:blob}); return true; }
+    catch(e){ if(e && e.code==='declined') return false; }
+  }
+  try{
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome;
+    document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    return true;
+  }catch(e){ return false; }
+}
+$('btnExport').onclick = async ()=>{
+  const blob = new Blob([JSON.stringify(cfg, null, 2)], {type:'application/json'});
+  if(await salvarArquivo('configuracoes-orcamento3d.json', blob)) toast('Configurações exportadas');
+};
+$('fileImport').onchange = e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    try{
+      const dados = JSON.parse(rd.result);
+      if(!dados || !Array.isArray(dados.filamentos) || !Array.isArray(dados.equipamentos)) throw 0;
+      cfg = Object.assign(JSON.parse(JSON.stringify(DEF)), dados);
+      saveCfg(); aplicarCfgNaTela(); atualizar(); toast('Configurações importadas');
+    }catch(err){ toast('Arquivo inválido'); }
+    e.target.value = '';
+  };
+  rd.readAsText(f);
+};
+$('btnPdf').onclick = baixar;
+$('btnPdf2').onclick = baixar;
+
+/* ---------- início ---------- */
+aplicarCfgNaTela();
+carregarRascunho(); atualizar();
+iniciarNuvem();
+
+/* ---------- app instalável ---------- */
+try{ if('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){}
+let pedidoInstalar = null;
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); pedidoInstalar = e; $('btnInstalar').classList.remove('hide'); });
+$('btnInstalar').onclick = async ()=>{
+  if(!pedidoInstalar) return;
+  pedidoInstalar.prompt(); await pedidoInstalar.userChoice.catch(()=>{}); pedidoInstalar = null; $('btnInstalar').classList.add('hide');
+};
+window.addEventListener('appinstalled', ()=> toast('App instalado!'));
+</script>
+</body>
+</html>
